@@ -105,7 +105,31 @@ The input accepts one image or a folder. Each image produces its own probability
 
 ## Weights
 
-**Checkpoints are not included in this repository.** Download links will be added here when weights are released.
+Pretrained checkpoints for the full **DCG + SRG** model are available in [GitHub Release v1.0.0](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/tag/v1.0.0). Model files are distributed as release assets and are not stored in Git history.
+
+| Dataset | Checkpoint | Size |
+| --- | --- | ---: |
+| CamCrack789 | [DSGCrack_CamCrack789.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CamCrack789.pt) | 9.68 MiB |
+| CrackMap | [DSGCrack_CrackMap.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CrackMap.pt) | 9.68 MiB |
+| DeepCrack | [DSGCrack_DeepCrack.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_DeepCrack.pt) | 9.68 MiB |
+| Crack500 | [DSGCrack_Crack500.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_Crack500.pt) | 9.68 MiB |
+
+These are the validation-selected checkpoints for the [original reported results](docs/results.md), converted without changing model tensor values. They contain model tensors and basic configuration only, and load directly without <code>--legacy-checkpoint</code>. Selection epochs and historical test metrics are recorded in [weights_manifest.json](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/weights_manifest.json). Historical metrics use the **legacy** protocol; they should not be interpreted as sigmoid-at-0.5 results.
+
+Download and evaluate, for example:
+
+~~~bash
+mkdir -p weights
+curl --fail --location \
+  https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CrackMap.pt \
+  --output weights/DSGCrack_CrackMap.pt
+CUDA_VISIBLE_DEVICES=0 python evaluate.py \
+  --dataset CrackMap --data-root data/CrackMap \
+  --checkpoint weights/DSGCrack_CrackMap.pt \
+  --output outputs/CrackMap/pretrained_test --protocol both
+~~~
+
+Verify downloaded files against [SHA256SUMS.txt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/SHA256SUMS.txt). Run <code>sha256sum -c SHA256SUMS.txt</code> in the download folder after downloading all four checkpoints.
 
 To prepare a model-only checkpoint for an external release:
 

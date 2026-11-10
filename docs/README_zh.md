@@ -38,9 +38,13 @@ CUDA_VISIBLE_DEVICES=0 python predict.py \
 
 预测不需要GT，单张图或文件夹均可，输出大小为512×512。
 
-## 旧权重与后续发布
+## 预训练权重与旧权重转换
 
-仓库不放权重，后续在根目录 README 添加真实下载链接。旧实验权重可用 export_checkpoint.py 的 legacy 开关转成仅含模型张量和基本配置的公开权重；转换严格校验键名和形状，不裁剪或补齐权重。
+四个数据集的完整方法权重已发布到 [GitHub Release v1.0.0](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/tag/v1.0.0)，各文件的直接下载链接见[根目录 README 的 Weights 部分](../README.md#weights)。每份约 9.68 MiB，对应论文原始实验中由验证集选出的最佳检查点；未使用超参数实验的重训权重。权重作为 Release 附件提供，不进入 Git 历史。
+
+下载对应数据集的权重后，将测试命令中的 checkpoint 替换为对应路径，例如 weights/DSGCrack_CrackMap.pt。公开权重仅含模型张量和基本配置，可直接加载，无需 legacy-checkpoint 开关；附件中的 SHA256SUMS.txt 和 weights_manifest.json 提供校验值、所选 epoch 及历史测试指标。
+
+旧实验权重可用 export_checkpoint.py 的 legacy 开关转换；转换严格校验键名和形状，不裁剪或补齐权重，模型张量值保持一致。
 
 公开版保留原版权和第三方许可。核心文件为 dsgcrack/dcg.py、dsgcrack/srg.py、dsgcrack/encoder.py 和 dsgcrack/decoder.py；旧名称仅用于权重兼容映射与上游来源说明。
 
