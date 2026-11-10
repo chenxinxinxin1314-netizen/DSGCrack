@@ -1,16 +1,12 @@
 # DSGCrack
 
-**DSGCrack** combines a TransMixer encoder with **Directional Confidence Gating (DCG)** and **Scale-Aware Residual Gating (SRG)** for crack segmentation.
+**DSGCrack** is a crack segmentation framework comprising a TransMixer encoder, **Directional Confidence Gating (DCG)**, and **Scale-Aware Residual Gating (SRG)**. DCG uses local directional statistics to condition residual feature refinement. In SRG, a shared shallow reference is combined with corrections specific to each scale to gate deeper features before fusion. The model contains **2,499,460 parameters** and processes images at **512 × 512** resolution.
 
-[中文使用说明](docs/README_zh.md) · [Evaluation protocols](docs/evaluation.md) · [Reported results](docs/results.md) · [Source attribution](third_party/README.md)
-
-This release contains the default full model, training, evaluation and image prediction. The model has **2,499,460 parameters**. Input and output resolution is **512 × 512**. Source code uses the names **DCG** and **SRG** consistently.
+[中文说明](docs/README_zh.md) · [Results](docs/results.md) · [Evaluation protocols](docs/evaluation.md) · [Pretrained weights](#weights)
 
 ## Installation
 
-Tested with Linux, Python 3.10, PyTorch 2.7.1, torchvision 0.22.1, CUDA 12.8, and an NVIDIA RTX 5090. A CUDA GPU is required for full-model forward/backward. CPU construction and small component tests do not need the compiled kernel.
-
-Clone the repository, then install from its root:
+The implementation was verified on Linux with Python 3.10, PyTorch 2.7.1, torchvision 0.22.1, CUDA 12.8, and an NVIDIA RTX 5090. Model execution requires an NVIDIA CUDA GPU. The selective scan extension is compiled locally using a CUDA toolkit with `nvcc`.
 
 ~~~bash
 git clone https://github.com/chenxinxinxin1314-netizen/DSGCrack.git
@@ -22,30 +18,54 @@ python -m pip install -r requirements.txt
 MAX_JOBS=1 python -m pip install --no-build-isolation ./kernels/selective_scan
 ~~~
 
-The last command requires a CUDA toolkit containing <code>nvcc</code>; <code>CUDA_HOME</code> must point to that toolkit if it is not discovered automatically. PyTorch chooses the visible GPU architecture by default. For an RTX 5090, <code>TORCH_CUDA_ARCH_LIST="12.0"</code> can be set explicitly with CUDA 12.8. Compiled binaries are built locally and are not distributed.
+Set `CUDA_HOME` to the CUDA toolkit directory if it is not detected automatically.
 
-## Data layout
+## Data preparation
 
-Bring your own datasets; no images or masks are distributed.
+Each dataset is organized as follows:
 
 ~~~text
-data/
-  CrackMap/
-    train_img/
-    train_lab/
-    val_img/
-    val_lab/
-    test_img/
-    test_lab/
+data/CrackMap/
+  train_img/
+  train_lab/
+  val_img/
+  val_lab/
+  test_img/
+  test_lab/
 ~~~
 
-Masks are PNG files with foreground values above 127. Image <code>sample.jpg</code> maps to mask <code>sample.png</code>. CamCrack789 uses <code>image-N.png</code> → <code>target-N.png</code>.
+PNG masks share the image stem, for example `sample.jpg` and `sample.png`. For CamCrack789, `image-N.png` is paired with `target-N.png`. The manifests in `splits/` specify the original sample ordering:
 
-The supplied manifests contain basenames in the original experiment ordering. They include 84/12/24 images for CrackMap, 553/79/157 for CamCrack789, 368/53/106 for DeepCrack, and 2357/336/675 for Crack500 (train/validation/test). The program checks manifest consistency. For a different split, provide <code>--split-file your_split.json</code>; <code>--split-file none</code> uses sorted filenames.
+| Dataset | Training | Validation | Test |
+| --- | ---: | ---: | ---: |
+| CamCrack789 | 553 | 79 | 157 |
+| CrackMap | 84 | 12 | 24 |
+| DeepCrack | 368 | 53 | 106 |
+| Crack500 | 2357 | 336 | 675 |
 
-Preprocessing reproduces the original full method: RGB, bicubic resizing to 512 × 512, normalization to [-1,1], and train-only paired horizontal/vertical flips and quarter-turn rotations. Masks are resized with the original bicubic-then-threshold procedure. The full-model recipes have no extra photometric augmentation.
+Input images use uint8 encoding and are converted to RGB, resized by bicubic interpolation, and normalized to [−1, 1]. Masks are resized by bicubic interpolation and binarized at values greater than 127. Training augmentation consists of paired horizontal and vertical flips and rotations in multiples of 90°. Custom splits are supported through `--split-file your_split.json`.
 
-## Train
+## Weights
+
+The checkpoints in [Release v1.0.0](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/tag/v1.0.0) correspond to the full DCG + SRG model selected by validation mIoU. Each file is approximately **9.68 MiB**.
+
+| Dataset | Download |
+| --- | --- |
+| CamCrack789 | [DSGCrack_CamCrack789.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CamCrack789.pt) |
+| CrackMap | [DSGCrack_CrackMap.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CrackMap.pt) |
+| DeepCrack | [DSGCrack_DeepCrack.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_DeepCrack.pt) |
+| Crack500 | [DSGCrack_Crack500.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_Crack500.pt) |
+
+Selection epochs and test metrics are provided in [weights_manifest.json](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/weights_manifest.json); file checksums are listed in [SHA256SUMS.txt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/SHA256SUMS.txt).
+
+~~~bash
+mkdir -p weights
+curl --fail --location \
+  https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CrackMap.pt \
+  --output weights/DSGCrack_CrackMap.pt
+~~~
+
+## Training
 
 ~~~bash
 CUDA_VISIBLE_DEVICES=0 python train.py \
@@ -53,137 +73,35 @@ CUDA_VISIBLE_DEVICES=0 python train.py \
   --output outputs/CrackMap
 ~~~
 
-Replace the dataset name and data path for the other datasets. Recipes use 100 epochs for CamCrack789, CrackMap and DeepCrack, and 50 for Crack500; batch size 1, seed 42, AdamW, learning rate 3e-4, weight decay 0.01, PolyLR to 1e-6, and 0.87 BCE-with-logits + 0.13 Dice loss. Both the encoder's local path and global path are retained.
+Training configurations are provided in `configs/`: 100 epochs for CamCrack789, CrackMap, and DeepCrack, and 50 epochs for Crack500. AdamW is used with batch size 1, seed 42, learning rate 3 × 10⁻⁴, weight decay 0.01, and polynomial learning rate decay to 10⁻⁶. The loss is `0.87 × BCEWithLogitsLoss + 0.13 × Dice loss`; training uses FP32 precision.
 
-Only validation is used during training. <code>best.pt</code> is selected by historical validation mIoU; <code>last.pt</code> includes optimizer, scheduler, RNG state and history for resuming:
+The checkpoint `best.pt` is selected by validation mIoU under the legacy protocol. Training can be resumed by appending `--resume outputs/CrackMap/last.pt` to the command above.
 
-~~~bash
-CUDA_VISIBLE_DEVICES=0 python train.py \
-  --dataset CrackMap --data-root data/CrackMap \
-  --output outputs/CrackMap --resume outputs/CrackMap/last.pt
-~~~
+## Evaluation and prediction
 
-Epoch count, batch size, seed, threads and loader workers can be overridden through CLI arguments. Algorithm settings and data order must match when resuming. Default precision is FP32; AMP and distributed training are not enabled.
-
-## Evaluate a test set
+Evaluate all test images using the corresponding checkpoint:
 
 ~~~bash
-CUDA_VISIBLE_DEVICES=0 python evaluate.py \
-  --dataset CrackMap --data-root data/CrackMap \
-  --checkpoint outputs/CrackMap/best.pt \
-  --output outputs/CrackMap/test --protocol both
-~~~
-
-All test images are evaluated. <code>metrics.json</code> reports **legacy** and **sigmoid** results in separate fields; values are fractions. Per-image files are saved independently:
-
-- <code>predictions/*_probability.png</code>: uint16 PNG; divide by 65535 for probabilities.
-- <code>predictions/*_mask.png</code>: binary sigmoid-threshold mask.
-- <code>predictions/*_label.png</code>: resized ground truth.
-- <code>legacy/*_pre.png</code>, <code>legacy/*_lab.png</code>: historical scores and labels.
-
-For sigmoid masks with one threshold selected on validation pooled pixel F1:
-
-~~~bash
-CUDA_VISIBLE_DEVICES=0 python evaluate.py \
-  --dataset CrackMap --data-root data/CrackMap \
-  --checkpoint outputs/CrackMap/best.pt \
-  --output outputs/CrackMap/test_calibrated --protocol both \
-  --calibrate-on-val
-~~~
-
-This selects the threshold on validation before evaluating test images. Test-label threshold sweeps reported as ODS/OIS do not choose the saved mask threshold. See [evaluation.md](docs/evaluation.md) for the historical definitions, including the nonstandard historical F1.
-
-## Predict unlabeled images
-
-~~~bash
-CUDA_VISIBLE_DEVICES=0 python predict.py \
-  --input path/to/images --checkpoint weights/model.pt \
-  --output outputs/predictions --threshold 0.5
-~~~
-
-The input accepts one image or a folder. Each image produces its own probability PNG and mask PNG at 512 × 512.
-
-## Weights
-
-Pretrained checkpoints for the full **DCG + SRG** model are available in [GitHub Release v1.0.0](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/tag/v1.0.0). Model files are distributed as release assets and are not stored in Git history.
-
-| Dataset | Checkpoint | Size |
-| --- | --- | ---: |
-| CamCrack789 | [DSGCrack_CamCrack789.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CamCrack789.pt) | 9.68 MiB |
-| CrackMap | [DSGCrack_CrackMap.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CrackMap.pt) | 9.68 MiB |
-| DeepCrack | [DSGCrack_DeepCrack.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_DeepCrack.pt) | 9.68 MiB |
-| Crack500 | [DSGCrack_Crack500.pt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_Crack500.pt) | 9.68 MiB |
-
-These are the validation-selected checkpoints for the [original reported results](docs/results.md), converted without changing model tensor values. They contain model tensors and basic configuration only, and load directly without <code>--legacy-checkpoint</code>. Selection epochs and historical test metrics are recorded in [weights_manifest.json](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/weights_manifest.json). Historical metrics use the **legacy** protocol; they should not be interpreted as sigmoid-at-0.5 results.
-
-Download and evaluate, for example:
-
-~~~bash
-mkdir -p weights
-curl --fail --location \
-  https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/DSGCrack_CrackMap.pt \
-  --output weights/DSGCrack_CrackMap.pt
 CUDA_VISIBLE_DEVICES=0 python evaluate.py \
   --dataset CrackMap --data-root data/CrackMap \
   --checkpoint weights/DSGCrack_CrackMap.pt \
-  --output outputs/CrackMap/pretrained_test --protocol both
+  --output outputs/CrackMap/test --protocol both
 ~~~
 
-Verify downloaded files against [SHA256SUMS.txt](https://github.com/chenxinxinxin1314-netizen/DSGCrack/releases/download/v1.0.0/SHA256SUMS.txt). Run <code>sha256sum -c SHA256SUMS.txt</code> in the download folder after downloading all four checkpoints.
+Paper results follow the **legacy** protocol. The **sigmoid** protocol evaluates probabilities, with a default mask threshold of 0.5. Both are reported separately in `metrics.json` as fractions; their thresholding and aggregation rules are specified in [Evaluation protocols](docs/evaluation.md). Appending `--calibrate-on-val` selects one global threshold by validation pixel F1 for subsequent test predictions.
 
-To prepare a model-only checkpoint for an external release:
+Probability maps, binary masks, and ground truth masks are saved separately for each test image. Probability PNGs are encoded as uint16; divide pixel values by 65535 to convert them to probabilities in [0, 1].
+
+For an image or a folder of images:
 
 ~~~bash
-python export_checkpoint.py \
-  --input outputs/CrackMap/best.pt --output weights/CrackMap.pt
+CUDA_VISIBLE_DEVICES=0 python predict.py \
+  --input path/to/images --checkpoint weights/DSGCrack_CrackMap.pt \
+  --output outputs/predictions --threshold 0.5
 ~~~
 
-For trusted original experiment checkpoints:
+## Implementation and license
 
-~~~bash
-python export_checkpoint.py --legacy \
-  --input path/to/checkpoint_best.pth --output weights/CrackMap.pt
-~~~
+The model is implemented in `dsgcrack/`, with DCG in `dcg.py`, SRG in `srg.py`, and feature fusion in `decoder.py`. `export_checkpoint.py` exports model tensors and configuration for distribution.
 
-The adapter strictly maps historical parameter names to the public DCG/SRG names; it does not crop, pad, reshape or discard model tensors. Native evaluation also supports trusted original checkpoints with <code>--legacy-checkpoint</code>. Legacy pickle loading is opt-in; public exports contain only model tensors and basic model metadata, without optimizer/RNG state or machine paths.
-
-## Repository layout
-
-The public Python package is <code>dsgcrack</code>, and the complete model class is <code>DSGCrack</code>:
-
-~~~python
-from dsgcrack import DSGCrack
-model = DSGCrack()
-~~~
-
-~~~text
-dsgcrack/
-  model.py              # Full DCG + SRG model
-  encoder.py            # Four-stage TransMixer encoder
-  dcg.py                # Directional Confidence Gating
-  srg.py                # Scale-Aware Residual Gating
-  decoder.py            # Multilevel projection, SRG, fusion and prediction
-  backbone/             # Required TransMixer / VMamba operations
-configs/                # Four full-model training recipes
-splits/                 # Original filename order; no dataset contents
-kernels/selective_scan/ # Required CUDA source
-train.py
-evaluate.py
-predict.py
-export_checkpoint.py
-tests/
-third_party/            # Source notices and license texts
-~~~
-
-## Checks
-
-~~~bash
-python -m pip install -r requirements-dev.txt
-python -m pytest -q
-~~~
-
-The repository does not contain datasets, weights, experiment logs, ablation variants, comparison methods, local environments or compiled binaries. Numerical results from a new training run may vary with hardware and library behavior; fixed split ordering and seed alone do not establish cross-platform bitwise training reproducibility.
-
-## Attribution and license
-
-The TransMixer backbone and supporting operations are adapted from [MixerCSeg](https://github.com/spiderforest/MixerCSeg) and [VMamba](https://github.com/MzeroMiko/VMamba). CUDA selective scan includes work from [Mamba](https://github.com/state-spaces/mamba). Upstream copyright and license notices are retained; see [third_party/README.md](third_party/README.md) and [LICENSE](LICENSE). These acknowledgments identify the inherited backbone separately from the DCG/SRG modifications.
+The TransMixer backbone and supporting operations are adapted from [MixerCSeg](https://github.com/spiderforest/MixerCSeg) and [VMamba](https://github.com/MzeroMiko/VMamba). The CUDA selective scan implementation incorporates code from [Mamba](https://github.com/state-spaces/mamba). Copyright and license notices are provided in [third_party/README.md](third_party/README.md) and [LICENSE](LICENSE).
