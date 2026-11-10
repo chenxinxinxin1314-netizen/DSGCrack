@@ -1,0 +1,9 @@
+torch==2.7.1
+torchvision==0.22.1
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+timm==0.4.12
+einops==0.8.2
+mmengine==0.10.7
+packaging>=24
+ninja>=1.11

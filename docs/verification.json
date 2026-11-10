@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "parameters": 2499460,
+  "core_names": [
+    "DCG",
+    "SRG"
+  ],
+  "component_tests": 6,
+  "CUDA_extension_built_from_shipped_source": true,
+  "equivalence_check": {
+    "scope": "one real test sample from each of the four datasets",
+    "maximum_logit_difference_by_dataset": {
+      "CamCrack789": 0.0,
+      "CrackMap": 0.0,
+      "DeepCrack": 0.0,
+      "Crack500": 0.0
+    },
+    "initialization_identical_after_key_renaming": true,
+    "loss_identical": true
+  },
+  "CrackMap_full_test": {
+    "metrics": {
+      "images": 24,
+      "mIoU": 0.82168111448504,
+      "ODS": 0.7915219459046018,
+      "OIS": 0.8035573230559704,
+      "F1": 0.7785760198785754,
+      "Precision": 0.6847311501476188,
+      "Recall": 0.9022298727140646
+    },
+    "delta_from_reported": {
+      "mIoU": 0.0,
+      "ODS": 0.0,
+      "OIS": 0.0,
+      "F1": 0.0
+    }
+  },
+  "CLI_integration": {
+    "status": "passed",
+    "training_epochs": 2,
+    "resume_from_epoch": 1,
+    "optimizer_scheduler_rng_restored": true,
+    "native_checkpoint_weights_only_loading": true,
+    "model_only_export": true,
+    "evaluation_test_images": 2,
+    "threshold_selected_on": "val",
+    "unlabeled_prediction_images": 2,
+    "evaluation_and_prediction_probabilities_equal": true,
+    "public_directory_contains_no_generated_data": true
+  },
+  "test_environment": {
+    "python": "3.10",
+    "torch": "2.7.1+cu128",
+    "torchvision": "0.22.1+cu128",
+    "CUDA": "12.8",
+    "GPU": "RTX5090"
+  },
+  "full_training_repeated_for_release": false,
+  "latency_or_peak_memory_benchmark": false,
+  "project": "DSGCrack",
+  "package": "dsgcrack",
+  "public_model_class": "DSGCrack",
+  "architecture": "dsgcrack_v1",
+  "project_rename_verification": {
+    "status": "passed",
+    "project": "DSGCrack",
+    "package": "dsgcrack",
+    "public_model_class": "DSGCrack",
+    "architecture": "dsgcrack_v1",
+    "parameters": 2499460,
+    "initialization_unchanged": true,
+    "original_experiment_checkpoint_strict_load": true,
+    "previous_exported_architecture_compatible": true,
+    "checkpoint_tensor_values_unchanged": true,
+    "four_CLI_entrypoints_import_and_help_passed": true
+  }
+}

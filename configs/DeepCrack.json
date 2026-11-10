@@ -1,0 +1,19 @@
+{
+  "epochs": 100,
+  "seed": 42,
+  "lr": 0.0003,
+  "min_lr": 1e-06,
+  "weight_decay": 0.01,
+  "batch_size": 1,
+  "BCELoss_ratio": 0.87,
+  "DiceLoss_ratio": 0.13,
+  "load_width": 512,
+  "load_height": 512,
+  "train_augmentation": true,
+  "dataset": "DeepCrack",
+  "architecture": "dsgcrack_v1",
+  "selection_metric": "legacy_mIoU",
+  "dcg_cell_size": 8,
+  "dcg_blocks": 2,
+  "srg_dim": 8
+}
