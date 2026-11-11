@@ -1,6 +1,15 @@
-# DSGCrack
+# DSGCrack: Directional Confidence and Scale-Aware Residual Gating for Crack Segmentation
 
-**DSGCrack** is a crack segmentation framework comprising a TransMixer encoder, **Directional Confidence Gating (DCG)**, and **Scale-Aware Residual Gating (SRG)**. DCG uses local directional statistics to condition residual feature refinement. In SRG, a shared shallow reference is combined with corrections specific to each scale to gate deeper features before fusion. The model contains **2,499,460 parameters** and processes images at **512 × 512** resolution.
+DSGCrack is a hierarchical framework for pixelwise crack segmentation in images with weak contrast, structured backgrounds, and variations in crack width and branching. It combines directional conditioning during encoder refinement with spatial selection guided by feature content during multiscale fusion.
+
+The framework integrates two modules:
+
+- **Directional Confidence Gating (DCG)** constructs a continuous descriptor from local orientation, gradient strength, and orientation consistency in encoder features. A learned gate combines this descriptor with feature content to regulate residual updates.
+- **Scale-Aware Residual Gating (SRG)** retains a shared shallow reference for localization and estimates separate gate corrections jointly from this reference and each deeper feature, adapting spatial selection before fusion.
+
+Trained using segmentation masks alone, DSGCrack improves **mIoU by 1.04 to 1.72 percentage points** over the best compared result on each of four datasets: **CrackMap, DeepCrack, CamCrack789, and Crack500**.
+
+**Model complexity:** 2.499 million parameters and an estimated 41.965 GFLOPs for a 512 × 512 RGB input.
 
 [中文说明](docs/README_zh.md) · [Results](docs/results.md) · [Evaluation protocols](docs/evaluation.md) · [Pretrained weights](#weights)
 
